@@ -45,7 +45,7 @@
             box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
             background-color: #fff;
             margin-top: 100px;
-            margin-bottom: 100px;
+            margin-bottom: 0px;
             justify-content: space-around;
             align-items: flex-start;
         }
@@ -92,12 +92,11 @@
                     </div>
                 </form>
             </div>
-
-            <div id="list-wrapper">
-
-            </div>
         </div>
+        <div id="list-wrapper" class="row">
 
+        </div>
+        
     </div>
 
     <script type="text/javascript">
@@ -140,23 +139,37 @@
                         catch (err) {
 
                         }
+                        var color = list[i].color
+                        
                         var title = `<span class="title">${list[i].title}</span>`
                         if (list[i].completed == true) {
                             title = `<strike class="title">${list[i].title}</strike>`
                         }
 
-                        var item = `
-                                                                                <div id="data-row-${i}" class="task-wrapper flex-wrapper">
-                                                                                        <div style="flex:7">
-                                                                                                ${title}
-                                                                                        </div>
-                                                                                        <div style="flex:1">
-                                                                                                <button class="btn btn-sm btn-outline-info edit">Edit </button>
-                                                                                        </div>
-                                                                                        <div style="flex:1">
-                                                                                                <button class="btn btn-sm btn-outline-danger delete">Delete</button>
-                                                                                        </div>
-                                                                                </div>
+                        var item = ` 
+                                        <div id="data-row-${i}" style="margin-right: auto;margin-left: auto;padding-left: auto;border-left-width: 0px;border-left-style: solid;border-right-width: 0px;border-right-style: solid;margin-top: 10px;" >
+                                            <div class="col-auto">
+                                                <div style="width: 18rem;margin-left: auto;margin-right: auto; background-color: ${color}" class="card task-wrapper flex-wrapper">
+                                                    <img class="card-img-top" src="..." alt="">
+                                                        <div class="card-body" style="margin-left: 0px;">
+                                                            <h5 class="card-title">${title}</h5>
+                                                            <select class="form-select form-select-sm color" id="select-${list[i].id}" name="select">
+                                                              <option   value="white" style="background-color: white">⬜</option>
+                                                              <option   value="aquamarine" style="background-color: aquamarine"></option>
+                                                              <option   value="orange" style="background-color: orange"></option>
+                                                              <option   value="yellow" style="background-color: yellow"></option>
+                                                              <option   value="yellowgreen" style="background-color: yellowgreen"></option>
+                                                            </select>
+                                                            <button class="btn btn-sm btn-outline-info edit">Edit </button>
+                                                            <button class="btn btn-sm btn-outline-danger delete">Delete</button>
+                                                        </div>
+                                                        <div class="card-footer text-muted">
+                                                            Date: ${list[i].date_of_creation.replace(/T/, ' ').replace(/\..+/, '')}                                                            
+                                                        </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                               
 
                                                                         `
                         wrapper.innerHTML += item
@@ -174,12 +187,19 @@
 
                     for (var i in list) {
                         var editBtn = document.getElementsByClassName('edit')[i]
+                        var colorbtn = document.getElementsByClassName('color')[i]
                         var deleteBtn = document.getElementsByClassName('delete')[i]
                         var title = document.getElementsByClassName('title')[i]
 
                         editBtn.addEventListener('click', (function (item) {
                             return function () {
                                 editItem(item)
+                            }
+                        })(list[i]))
+
+                        colorbtn.addEventListener('click', (function (item) {
+                            return function () {
+                                colorchanged(item)
                             }
                         })(list[i]))
 
@@ -210,7 +230,7 @@
             console.log('Form submitted')
             var urlpost = '/api/ToDoModels';
             var title = document.getElementById('title').value
-            const myBody = { 'id': 0, 'title': title, 'completed': false };
+            const myBody = { 'id': 0, 'title': title, 'completed': false, 'color': 'white' };
             if (activeItem != null) {
                 var urlput = `/api/ToDoModels/${activeItem.id}`;
                 myBody.id = activeItem.id;
@@ -255,7 +275,6 @@
         }
 
 
-
         function editItem(item) {
             console.log('Item clicked:', item)
             activeItem = item
@@ -265,6 +284,7 @@
 
         function deleteItem(item) {
             console.log('Delete clicked')
+            
             fetch(`/api/ToDoModels/${item.id}/`, {
                 method: 'DELETE',
                 headers: {
@@ -278,7 +298,26 @@
         function strikeUnstrike(item) {
             console.log('Strike clicked');
             item.completed = !item.completed;
-            const myBody = JSON.stringify({ 'id': item.id, 'title': item.title, 'completed': item.completed });
+            const myBody = JSON.stringify({ 'id': item.id, 'title': item.title, 'completed': item.completed, 'color': item.color });
+            const myUrl = `/api/ToDoModels/${item.id}`;
+            console.log(myBody);
+            fetch(myUrl, {
+                method: 'PUT',
+                headers: {
+                    'Content-type': 'application/json',
+                },
+                body: myBody,
+            }).then((response) => {
+                buildList()
+            })
+        }
+
+        function colorchanged(item) {
+            console.log('select-' + item.id)
+            var colors = document.getElementById('select-' + item.id).value;
+            item.color = colors;
+            document.getElementById('select-' + item.id).parentNode.parentNode.style.backgroundColor = colors
+            const myBody = JSON.stringify({ 'id': item.id, 'title': item.title, 'completed': item.completed, 'color': item.color });
             const myUrl = `/api/ToDoModels/${item.id}`;
             console.log(myBody);
             fetch(myUrl, {

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -22,11 +24,11 @@ namespace WebTODOapp.Controllers
 
         // GET: api/ToDoModels
         [HttpGet]
-
         public async Task<ActionResult<IEnumerable<ToDoModel>>> GetToDoTable()
         {
             return await _context.ToDoTable.ToListAsync();
         }
+
 
         // GET: api/ToDoModels/5
         [HttpGet("{id}")]
@@ -72,6 +74,21 @@ namespace WebTODOapp.Controllers
             }
 
             return NoContent();
+        }
+
+        [Route("export")]
+        [HttpGet]
+        public FileResult ExportToCSV()
+        {
+            var sb = new StringBuilder();
+            var list = _context.ToDoTable.ToList();
+            sb.AppendFormat("{0},{1},{2},{3},{4}", "title", "completed", "color", "date_of_creation", Environment.NewLine);
+            foreach (var item in list)
+            {
+                sb.AppendFormat("{0},{1},{2},{3},{4}", item.title, item.completed, item.color, item.Date_of_creation,  Environment.NewLine);
+            }
+
+            return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", DateTime.Now+".csv");
         }
 
         // POST: api/ToDoModels

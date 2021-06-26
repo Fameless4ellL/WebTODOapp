@@ -16,4 +16,5 @@ namespace WebTODOapp.Areas.Identity.Data
         [PersonalData]
         public string LastName { get; set; }
     }
+
 }
