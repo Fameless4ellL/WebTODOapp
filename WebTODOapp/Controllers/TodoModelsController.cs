@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -76,6 +77,74 @@ namespace WebTODOapp.Controllers
             return NoContent();
         }
 
+
+        // GET: api/TodoModels/count?Tasks=a
+        [HttpGet("count")]
+        [Produces("application/json")]
+        public string OnGet(string Tasks)
+        {
+            IQueryable<ToDoModel> Todo = from s in _context.ToDoTable
+                                         select s;
+            var counter = Todo.Count();
+
+            switch (Tasks)
+            {
+                case "completed":
+                    Todo = Todo.Where(s => s.completed == true);
+                    counter = Todo.Count();
+                    break;
+                case "uncompleted":
+                    Todo = Todo.Where(s => s.completed == false);
+                    counter = Todo.Count();
+                    break;
+                default:
+                    Todo = Todo.OrderBy(s => s.id);
+                    break;
+            } 
+            string jsonString = JsonSerializer.Serialize(counter);
+
+            return jsonString;
+        }
+
+        // GET: api/TodoModels/post?sortOrder=a&searchString=b
+        [HttpGet("post")]
+        public async Task<List<ToDoModel>> OnGetAsync(string sortOrder, string searchString)
+        {
+            
+
+            IQueryable<ToDoModel> Todo = from s in _context.ToDoTable
+                                         select s;
+
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                Todo = Todo.Where(s => s.title.Contains(searchString)
+                                       || s.color.Contains(searchString));
+            }
+
+            switch (sortOrder)
+            {
+                case "title":
+                    Todo = Todo.OrderByDescending(s => s.title);
+                    break;
+                case "date":
+                    Todo = Todo.OrderBy(s => s.Date_of_creation);
+                    break;
+                case "color":
+                    Todo = Todo.OrderBy(s => s.color);
+                    break;
+                case "completed":
+                    Todo = Todo.OrderByDescending(s => s.completed);
+                    break;
+                default:
+                    Todo = Todo.OrderBy(s => s.id);
+                    break;
+            }
+            return await Todo.AsNoTracking().ToListAsync();
+
+        }
+
+
+        // GET: /api/TodoModels/export
         [Route("export")]
         [HttpGet]
         public FileResult ExportToCSV()
